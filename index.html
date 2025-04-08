@@ -7,22 +7,83 @@
     <title>Flashcard Từ Vựng</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
+<style>
+    .card-container {
+        perspective: 1000px;
+        width: 400px;
+        height: 240px;
+        margin: auto;
+        cursor: pointer;
+    }
+
+    .card-inner {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        transform-style: preserve-3d;
+        transition: transform 0.6s;
+    }
+
+    .card-container.flipped .card-inner {
+        transform: rotateY(180deg);
+    }
+
+    .card-front {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        backface-visibility: hidden;
+        background: rgb(67, 205, 184);
+        border-radius: 1rem;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-size: 1.8rem;
+        padding: 1rem;
+        text-align: center;
+    }
+
+    .card-back {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        backface-visibility: hidden;
+        background: white;
+        border-radius: 1rem;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        /* display: flex; */
+        /* justify-content: center; */
+        /* align-items: center; */
+        font-size: 1.8rem;
+        /* padding: 1rem; */
+        /* text-align: center; */
+    }
+
+    .card-back {
+        transform: rotateY(180deg);
+        background-color: #f3f4f6;
+    }
+</style>
 
 <body class="bg-gray-100 font-sans flex items-center justify-center min-h-screen p-4">
     <div class="max-w-md w-full bg-white rounded-2xl shadow-lg p-6 text-center">
-        <h1 class="text-2xl font-bold mb-4 text-blue-600">📚 Flashcard HSK for Ngọc Diễm</h1>
+        <h1 class="text-2xl font-bold mb-4 text-blue-600">📚 Flashcard for Ngọc Diễm</h1>
 
-        <div id="card"
-            class="relative bg-blue-50 rounded-xl p-6 h-48 flex items-center justify-center text-xl font-semibold cursor-pointer transition-all duration-500">
-            Loading....
+        <div id="card" class="card-container" onclick="flipCard()">
+            <div class="card-inner">
+                <div class="card-front" id="card-front"></div>
+                <div class="card-back" id="card-back"></div>
+            </div>
         </div>
 
         <div class="mt-4 flex justify-between items-center">
             <!-- <button onclick="prevCard()" class="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300">⬅️</button> -->
-            <button onclick="playAudio()" class="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600">🔊 Phát âm</button>
+            <button onclick="playAudio()" class="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600">🔊 Phát
+                âm</button>
             <button onclick="nextCard()" class="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300">Từ khác</button>
         </div>
-
+        <p class="mt-4 text-gray-600" id="progress">Thẻ 1 / 3</p>
         <div class="mt-4">
             <button onclick="remember(true)" class="px-4 py-1 bg-blue-100 text-blue-600 rounded hover:bg-blue-200">⬆️
                 Nhớ rùi</button>
@@ -30,15 +91,20 @@
                 Tôi quên</button> -->
         </div>
 
-        <p class="mt-4 text-gray-600" id="progress">Thẻ 1 / 3</p>
+
         <div id="stats" class="text-sm text-gray-600 mt-2">
             ✅ Nhớ: <span id="count-remembered">0</span> |
             ❌ Quên: <span id="count-forgotten">0</span>
         </div>
+        <button onclick="resetProgress()"
+            class="bg-yellow-400 hover:bg-yellow-500 text-white px-4 py-2 rounded shadow mt-2">
+            🔄 Học lại từ đầu
+        </button>
     </div>
 
     <script>
-        let rememberedCount = 0;
+        let rememberedWords = JSON.parse(localStorage.getItem("rememberedWords")) || [];
+        let rememberedCount = rememberedWords.length;
         let forgottenCount = 0;
         let cards = [];
         let current = 0;
@@ -46,13 +112,13 @@
         async function fetchVocabulary() {
             try {
                 const res = await fetch("https://raw.githubusercontent.com/clem109/hsk-vocabulary/master/hsk-vocab-json/hsk-level-4.json");
-
                 const data = await res.json();
-                cards = data.map(item => ({
-                    word: item.hanzi,
-                    meaning: item.pinyin,
-                    example: `Nghĩa: ${item.translations[0]==undefined?"":"<br>-"+item.translations[0]}${item.translations[1]==undefined?"":"<br>-"+item.translations[1]}${item.translations[2]==undefined?"":"<br>-"+item.translations[2]}${item.translations[3]==undefined?"":"<br>-"+item.translations[3]}.`
-                }));
+                cards = data.filter(item => !rememberedWords.includes(item.hanzi))
+                    .map(item => ({
+                        word: item.hanzi,
+                        meaning: item.pinyin,
+                        example: `${item.translations[0] == undefined ? "" : "-" + item.translations[0]}${item.translations[1] == undefined ? "" : "<br>-" + item.translations[1]}${item.translations[2] == undefined ? "" : "<br>-" + item.translations[2]}${item.translations[3] == undefined ? "" : "<br>-" + item.translations[3]}.`
+                    }));
                 current = 0;
                 flipped = false;
                 updateCard();
@@ -96,13 +162,23 @@
         });
 
         function updateCard() {
-            const item = cards[current];
-            card.innerHTML = flipped
-                ? `<div><div class='text-lg'>${item.meaning}</div><div class='text-sm mt-2 text-gray-600 italic'>${item.example}</div></div>`
-                : item.word;
-            progress.textContent = `Thẻ ${current + 1} / ${cards.length}`;
-        }
+            document.getElementById("card-front").textContent = cards[current].word;
+            document.getElementById("card-back").innerHTML = `
+    <strong>${cards[current].meaning}</strong><br>
+    <em>${cards[current].example}</em>
+  `;
+            document.getElementById("progress").textContent = `Từ ${current + 1} / ${cards.length}`;
 
+            // Reset hiệu ứng lật nếu đang ở mặt sau
+            if (flipped) {
+                document.getElementById("card").classList.remove("flipped");
+                flipped = false;
+            }
+        }
+        function flipCard() {
+            document.getElementById("card").classList.toggle("flipped");
+            flipped = !flipped;
+        }
         function nextCard() {
             if (cards.length <= 1) return; // Không làm gì nếu chỉ còn 1 thẻ
             let next;
@@ -127,11 +203,13 @@
             // alert(isRemembered ? "Tuyệt! Bạn đã nhớ." : "Không sao, ôn lại sau nhé!");
             if (isRemembered) {
                 rememberedCount++;
+                rememberedWords.push(cards[current].word);
+                localStorage.setItem("rememberedWords", JSON.stringify(rememberedWords));
                 cards.splice(current, 1);
                 if (cards.length === 0) {
                     card.innerHTML = "<span class='text-green-600 text-lg'>🎉 Bạn đã nhớ hết các từ!</span>";
                     progress.textContent = "";
-                    document.getElementById("stats").textContent = `✅ Nhớ: ${rememberedCount} | ❌ Quên: ${forgottenCount}`;
+                    updateStats();
                     return;
                 }
                 if (current >= cards.length) current = 0;
@@ -152,6 +230,39 @@
         }
 
         updateCard();
+        function resetProgress() {
+            if (confirm("Bạn có chắc muốn học lại từ đầu?")) {
+                localStorage.removeItem("rememberedWords");
+                rememberedWords = [];
+                rememberedCount = 0;
+                forgottenCount = 0;
+                fetchVocabulary();
+                updateStats();
+            }
+        }
+
+        // function translateCard(textToTranslate) {
+        // 25 lần mỗi phút thôi
+        //     fetch("https://libretranslate.com/translate", {
+        //         method: "POST",
+        //         body: JSON.stringify({
+        //             q: textToTranslate,
+        //             source: "zh",
+        //             target: "vi",
+        //             format: "text"
+        //         }),
+        //         headers: { "Content-Type": "application/json" }
+        //     })
+        //         .then(res => res.json())
+        //         .then(data => {
+        //             return data.translatedText;
+        //             // document.getElementById("translated").textContent = data.translatedText;
+        //         })
+        //         .catch(err => {
+        //             document.getElementById("translated").textContent = "⚠️ Lỗi khi dịch!";
+        //             console.error(err);
+        //         });
+        // }
     </script>
 </body>
 
