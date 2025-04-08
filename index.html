@@ -24,12 +24,12 @@
             <button onclick="nextCard()" class="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300">➡️</button>
         </div>
 
-        <div class="mt-4">
+<!--         <div class="mt-4">
             <button onclick="remember(true)" class="px-4 py-1 bg-blue-100 text-blue-600 rounded hover:bg-blue-200">⬆️
                 Tôi nhớ</button>
             <button onclick="remember(false)" class="px-4 py-1 bg-red-100 text-red-600 rounded hover:bg-red-200 ml-2">❌
                 Tôi quên</button>
-        </div>
+        </div> -->
 
         <p class="mt-4 text-gray-600" id="progress">Thẻ 1 / 3</p>
     </div>
@@ -46,7 +46,7 @@
             cards = data.map(item => ({
                 word: item.hanzi,
                 meaning: item.pinyin,
-                example: `例句: 我${item.translations[0]}你。`
+                example: `例句: 我 ${item.translations[0]} 你。`
             }));
             current = 0;
             flipped = false;
