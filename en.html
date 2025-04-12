@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Flashcard Vocabulary App</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(to right, #dbeafe, #e0e7ff);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      margin: 0;
+      padding: 1rem;
+    }
+    .card {
+      background: white;
+      border-radius: 16px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      padding: 2rem;
+      width: 100%;
+      max-width: 350px;
+      text-align: center;
+      cursor: pointer;
+      transition: transform 0.5s;
+    }
+    .card:hover {
+      transform: scale(1.05);
+    }
+    .word {
+      font-size: 1.5rem;
+      font-weight: bold;
+      color: #4338ca;
+    }
+    .phonetic {
+      color: #6b7280;
+      font-style: italic;
+    }
+    .definition {
+      margin-top: 1rem;
+      font-size: 1rem;
+      color: #1f2937;
+    }
+    .example {
+      font-size: 0.9rem;
+      font-style: italic;
+      color: #4b5563;
+      margin-top: 0.5rem;
+    }
+    .pos-title {
+      font-weight: bold;
+      color: #2563eb;
+      margin-top: 1rem;
+    }
+    .buttons {
+      margin-top: 1.5rem;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: center;
+    }
+    button {
+      padding: 0.5rem 1rem;
+      border: none;
+      background: #6366f1;
+      color: white;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #4f46e5;
+    }
+    .counter {
+      margin-top: 1.5rem;
+      font-size: 1rem;
+      color: #1e3a8a;
+    }
+    @media (max-width: 480px) {
+      .card {
+        padding: 1rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <h1>Flashcard Học Từ Vựng</h1>
+  <div class="card" onclick="flipCard()">
+    <div id="card-front" style="min-height: 150px;">
+      <div class="word" id="word">serene</div>
+      <div class="phonetic" id="phonetic">/səˈriːn/</div>
+      <div class="buttons">
+        <button id="btn_us" onclick="playAudio('us'); event.stopPropagation();">🔊 US</button>
+        <button id="btn_uk" onclick="playAudio('uk'); event.stopPropagation();">🔊 UK</button>
+      </div>
+      <div class="definition">Level: <span id="level">C1</span></div>
+    </div>
+    <div id="card-back" style="display:none">
+      <div id="pos-sections"></div>
+    </div>
+  </div>
+  <div class="buttons">
+    <button onclick="rememberWord()">✅ Nhớ từ</button>
+    <button onclick="randomCard()">🔀 Ngẫu nhiên</button>
+  </div>
+  <div class="counter">
+    Đã nhớ: <span id="remembered-count">0</span> / <span id="total-count">0</span>
+  </div>
+  <div class="buttons" id="resetBtnWrapper" style="display: block;">
+    <button id="resetBtn" onclick="resetMemory()">🔄 Reset</button>
+    <button id="reloadBtn" onclick="fetchAndSaveVocabulary()">🔄 Cập nhật từ server</button>
+  </div>
+
+  <audio id="audio"></audio>
+
+  <script>
+    const DATA_URL = "https://raw.githubusercontent.com/phucnhapp/aboutme/refs/heads/main/vocabulary.json"; // Thay link thật của bạn vào đây
+
+    async function fetchAndSaveVocabulary() {
+      try {
+        const response = await fetch(DATA_URL);
+        if (!response.ok) throw new Error("Không thể tải dữ liệu từ server.");
+        const data = await response.json();
+        localStorage.setItem('vocabularyData', JSON.stringify(data));
+        alert("Đã tải và cập nhật danh sách từ vựng thành công!");
+        location.reload(); // Tải lại trang để cập nhật giao diện
+      } catch (error) {
+        console.error(error);
+        alert("❌ Lỗi khi tải dữ liệu từ server! Kiểm tra lại đường truyền hoặc URL.");
+      }
+    }
+    function loadVocabularyFromLocalStorage() {
+  const savedData = localStorage.getItem('vocabularyData');
+  if (savedData) {
+    vocabulary = JSON.parse(savedData);
+    displayCard(); // Dùng lại hàm cũ để hiển thị thẻ
+  } else {
+    console.warn("Không có dữ liệu từ vựng trong LocalStorage, vui lòng nhấn nút Cập Nhật!");
+  }
+}
+
+//     const vocabulary = [
+//     {"word":"a ","phonetic":"/æɪ/","level":"A1","noun":{"pos":"noun","definition":"The name of the Latin script letter A/a.","example":""}, "verb":{"pos":"","definition":"","example":""}, "adjective":{"pos":"","definition":"","example":""}, "other":{"pos":"","definition":"","example":""}, "audio":{"us":"https://api.dictionaryapi.dev/media/pronunciations/en/a-1-us.mp3","uk":""}, "synonyms":"","antonyms":"","status":"Done","timestamp":"" },
+// {"word":"abandon","phonetic":"/əˈbæn.dən/","level":"B1","noun":{"pos":"","definition":"","example":""}, "verb":{"pos":"verb","definition":"To give up or relinquish control of, to surrender or to give oneself over, or to yield to one's emotions.; To desist in doing, practicing, following, holding, or adhering to; to turn away from; to permit to lapse; to renounce; to discontinue.; To leave behind; to desert as in a ship or a position, typically in response to overwhelming odds or impending dangers; to forsake, in spite of a duty or responsibility.; To subdue; to take control of.; To cast out; to banish; to expel; to reject.; To no longer exercise a right, title, or interest, especially with no interest of reclaiming it again; to yield; to relinquish.; To surrender to the insurer (an insured item), so as to claim a total loss.","example":"Many baby girls have been abandoned on the streets of Beijing."}, "adjective":{"pos":"","definition":"","example":""}, "other":{"pos":"","definition":"","example":""}, "audio":{"us":"https://api.dictionaryapi.dev/media/pronunciations/en/abandon-us.mp3","uk":""}, "synonyms":"","antonyms":"","status":"Done","timestamp":"" },
+// {"word":"abandoned","phonetic":"/əˈbæn.dn̩d/","level":"B2","noun":{"pos":"","definition":"","example":""}, "verb":{"pos":"verb","definition":"To give up or relinquish control of, to surrender or to give oneself over, or to yield to one's emotions.; To desist in doing, practicing, following, holding, or adhering to; to turn away from; to permit to lapse; to renounce; to discontinue.; To leave behind; to desert as in a ship or a position, typically in response to overwhelming odds or impending dangers; to forsake, in spite of a duty or responsibility.; To subdue; to take control of.; To cast out; to banish; to expel; to reject.; To no longer exercise a right, title, or interest, especially with no interest of reclaiming it again; to yield; to relinquish.; To surrender to the insurer (an insured item), so as to claim a total loss.","example":"Many baby girls have been abandoned on the streets of Beijing."}, "adjective":{"pos":"adjective","definition":"Having given oneself up to vice; immoral; extremely wicked, or sinning without restraint; irreclaimably wicked.; No longer maintained by its former owners, residents or caretakers; forsaken, deserted.; Free from constraint; uninhibited.; No longer being acted upon by the geologic forces that formed it.","example":""}, "other":{"pos":"","definition":"","example":""}, "audio":{"us":"https://api.dictionaryapi.dev/media/pronunciations/en/abandoned-us.mp3","uk":""}, "synonyms":"","antonyms":"","status":"Done","timestamp":"" },
+// {"word":"ability","phonetic":"/əˈ.bɪl.ɪ.ti/","level":"A2","noun":{"pos":"noun","definition":"Suitableness.; The quality or state of being able; capacity to do or of doing something; having the necessary power.; The legal wherewithal to act.; Physical power.; Financial ability.; A unique power of the mind; a faculty.; A skill or competence in doing; mental power; talent; aptitude.","example":"This phone has the ability to have its software upgraded wirelessly.; She has an uncanny ability to defuse conflict."}, "verb":{"pos":"","definition":"","example":""}, "adjective":{"pos":"","definition":"","example":""}, "other":{"pos":"","definition":"","example":""}, "audio":{"us":"https://api.dictionaryapi.dev/media/pronunciations/en/ability-us.mp3","uk":""}, "synonyms":"","antonyms":"","status":"Done","timestamp":"" },
+// {"word":"able","phonetic":"/ˈeɪ.bl̩/","level":"B1","noun":{"pos":"","definition":"","example":""}, "verb":{"pos":"","definition":"","example":""}, "adjective":{"pos":"adjective","definition":"Easy to use.; Suitable; competent.; Liable to.; Having the necessary powers or the needed resources to accomplish a task.; Free from constraints preventing completion of task; permitted to; not prevented from.; Having the physical strength; robust; healthy.; Rich; well-to-do.; Gifted with skill, intelligence, knowledge, or competence.; Legally qualified or competent.; Capable of performing all the requisite duties; as an able seaman.","example":"I’ll see you as soon as I’m able.; After the past week of forced marches, only half the men are fully able.; He was born to an able family.; The chairman was also an able sailor.; He is able to practice law in six states."}, "other":{"pos":"","definition":"","example":""}, "audio":{"us":"https://api.dictionaryapi.dev/media/pronunciations/en/able-us.mp3","uk":""}, "synonyms":"","antonyms":"","status":"Done","timestamp":"" },
+// {"word":"abnormal","phonetic":"/əbˈnɔɹ.ml̩/","level":"B1","noun":{"pos":"noun","definition":"A person or object that is not normal.","example":""}, "verb":{"pos":"","definition":"","example":""}, "adjective":{"pos":"adjective","definition":"Not conforming to rule or system; deviating from the usual or normal type.; Of or pertaining to that which is irregular, in particular, behaviour that deviates from norms of social propriety or accepted standards of mental health.","example":""}, "other":{"pos":"","definition":"","example":""}, "audio":{"us":"https://api.dictionaryapi.dev/media/pronunciations/en/abnormal-us.mp3","uk":""}, "synonyms":"","antonyms":"","status":"Done","timestamp":"" },
+// {"word":"abnormally","phonetic":"/æbˈnɔɹ.mə.li/","level":"B2","noun":{"pos":"","definition":"","example":""}, "verb":{"pos":"","definition":"","example":""}, "adjective":{"pos":"","definition":"","example":""}, "other":{"pos":"adverb","definition":"In an abnormal manner; in a way that deviates from a standard, norm, or average.","example":""}, "audio":{"us":"","uk":""}, "synonyms":"","antonyms":"","status":"Done","timestamp":"" },
+// {"word":"aboard","phonetic":"/əˈbɔːd/","level":"B1","noun":{"pos":"","definition":"","example":""}, "verb":{"pos":"","definition":"","example":""}, "adjective":{"pos":"","definition":"","example":""}, "other":{"pos":"adverb; preposition","definition":"On board; into or within a ship or boat; hence, into or within a railway car.; On or onto a horse, a camel, etc.; On base.; Into a team, group, or company.; Alongside.; On board of; onto or into a ship, boat, train, plane.; Onto a horse.; Across; athwart; alongside.","example":"We all climbed aboard.; To sling a saddle aboard.; He doubled with two men aboard, scoring them both.; The office manager welcomed him aboard.; The captain laid his ship aboard the enemy's ship.; We all went aboard the ship."}, "audio":{"us":"https://api.dictionaryapi.dev/media/pronunciations/en/aboard-us.mp3","uk":""}, "synonyms":"","antonyms":"","status":"Done","timestamp":"" },
+// {"word":"abolish","phonetic":"/əˈbɒlɪʃ/","level":"B2","noun":{"pos":"","definition":"","example":""}, "verb":{"pos":"verb","definition":"To end a law, system, institution, custom or practice.; To put an end to or destroy, as a physical object; to wipe out.","example":"Slavery was abolished in the nineteenth century."}, "adjective":{"pos":"","definition":"","example":""}, "other":{"pos":"","definition":"","example":""}, "audio":{"us":"https://api.dictionaryapi.dev/media/pronunciations/en/abolish-us.mp3","uk":""}, "synonyms":"","antonyms":"","status":"Done","timestamp":"" },
+// {"word":"aboriginal","phonetic":"/ˌæb.əˈɹɪd͡ʒ.n̩.l̩/","level":"B2","noun":{"pos":"noun; noun","definition":"An Aboriginal inhabitant of Australia, Aborigine.; An animal or plant native to a region.","example":""}, "verb":{"pos":"","definition":"","example":""}, "adjective":{"pos":"adjective; adjective","definition":"Of or pertaining to Australian Aboriginal peoples, Aborigines, or their language.; First according to historical or scientific records; original; indigenous; primitive.; Living in a land before colonization by the Europeans.","example":""}, "other":{"pos":"","definition":"","example":""}, "audio":{"us":"","uk":"https://api.dictionaryapi.dev/media/pronunciations/en/aboriginal-uk.mp3"}, "synonyms":"","antonyms":"","status":"Done","timestamp":"" },
+// {"word":"aborigine","phonetic":"/ˌæb.əˈɹɪdʒ.ɪ.ni/","level":"B1","noun":{"pos":"noun","definition":"A native inhabitant of a country; a member of the original people.; (in the plural) The native flora and fauna of an area.","example":""}, "verb":{"pos":"","definition":"","example":""}, "adjective":{"pos":"","definition":"","example":""}, "other":{"pos":"","definition":"","example":""}, "audio":{"us":"https://api.dictionaryapi.dev/media/pronunciations/en/aborigine-us.mp3","uk":""}, "synonyms":"","antonyms":"","status":"Done","timestamp":"" },
+// {"word":"about","phonetic":"/əˈbɛʊt/","level":"A1","noun":{"pos":"","definition":"","example":""}, "verb":{"pos":"","definition":"","example":""}, "adjective":{"pos":"adjective","definition":"Moving around; astir.; In existence; being in evidence; apparent.; Near; in the vicinity or neighbourhood.","example":"After my bout with Guillan-Barre Syndrome, it took me 6 months to be up and about again.; This idea has been about for a while but has only recently become fashionable.; I had my keys just a minute ago, so they must be about somewhere."}, "other":{"pos":"adverb; preposition","definition":"On all sides; around.; Here and there; around; in one place and another; up and down.; From one place or position to another in succession; indicating repeated movement or activity.; Indicating unproductive or unstructured activity.; Nearly; approximately; with close correspondence in quality, manner, degree, quantity, or time; almost.; Near; in the vicinity.; To a reversed order; half round; facing in the opposite direction; from a contrary point of view.; In succession; one after another; in the course of events.; In circuit; circularly; by a circuitous way; around the outside; in circumference.; In a circle around; all round; on every side of; on the outside of.; Over or upon different parts of; through or over in various directions; here and there in; to and fro in; throughout.; Indicates that something will happen very soon; indicates a plan or intention to do something.; Concerning; with regard to; on account of; on the subject of; to affect.; Concerned with; engaged in; intent on.; Within or in the immediate neighborhood of; in contiguity or proximity to; near, as to place.; On one's person; nearby the person.; In or near, as in mental faculties or in the possession of; under the control of; at one's command; in one's makeup.","example":"I looked about at the scenery that surrounded me.; Bits of old machinery were lying about.; walking about;  rushing about;  jumping about;  thrashing about; messing about;   fooling about;  loafing about; Dinner's about ready.; to face about;  to turn oneself about; a mile about, and a third of a mile across; The snake was coiled about his ankle.; He was well known about town.; He talked a lot about his childhood.; to be about one's business; I can't find my reading glasses, but they must be somewhere about the house.; I had no weapon about me but a stick.; He has his wits about him."}, "audio":{"us":"https://api.dictionaryapi.dev/media/pronunciations/en/about-us.mp3","uk":""}, "synonyms":"apropos; as for","antonyms":"","status":"Done","timestamp":"" },
+// {"word":"above","phonetic":"/əˈbʌv/","level":"B1","noun":{"pos":"noun","definition":"Heaven.; Something, especially a person's name in legal documents, that appears higher on the same page or on a preceding page.; Higher authority.; Betterment, raised status or condition.","example":""}, "verb":{"pos":"","definition":"","example":""}, "adjective":{"pos":"adjective","definition":"Of heaven; heavenly.; (by ellipsis) Being located higher on the same page or on a preceding page.","example":""}, "other":{"pos":"adverb; preposition","definition":"Directly overhead; vertically on top of.; Higher in the same page; earlier in the order as far as writing products go.; Into or from heaven; in the sky.; In a higher place; upstairs; farther upstream.; Higher in rank, power, or position.; In addition.; More in number.; Above zero; above freezing.; On the upper half or the dorsal surface of an animal.; Physically over; on top of; worn on top of, said of clothing.; In or to a higher place; higher than; on or over the upper surface.; Farther north than.; Rising; appearing out of reach height-wise.; Higher than; superior to in any respect; surpassing; higher in measure, degree, volume, or pitch, etc. than; out of reach; not exposed to; not likely to be affected by; incapable of negative actions or thoughts.; Higher in rank, status, or position.; In addition to; besides.; Surpassing in number or quantity; more than.; In preference to.; Too proud to stoop to; averse to; disinclined towards;; Beyond; on the other side.; Upstage of.","example":"He's in a better place now, floating free as the clouds above.; He appealed to the court above.; It was a cold day at only 5 above.; The sparrow I saw was rufous above and off-white below.; He always put his coat on above his sweater.; Idaho is above Utah.; Even the chief of police is not above suspicion.; to stand head and shoulders above the rest; above and beyond the call of duty; That amount is way above our asking price.; The owner was above taking more than a token salary."}, "audio":{"us":"https://api.dictionaryapi.dev/media/pronunciations/en/above-us.mp3","uk":""}, "synonyms":"","antonyms":"below; beneath","status":"Done","timestamp":"" },
+//     ];
+
+    let rememberedWords = new Set(JSON.parse(localStorage.getItem('rememberedWords') || '[]'));
+    let index = 0;
+    let flipped = false;
+
+    // Cập nhật số lượng từ đã nhớ và tổng số lượng từ
+    function updateCounter() {
+      document.getElementById('remembered-count').textContent = rememberedWords.size;
+      document.getElementById('total-count').textContent = vocabulary.length;
+    }
+
+    // Loại bỏ từ đã nhớ khỏi danh sách cần học
+    function getRemainingVocabulary() {
+      return vocabulary.filter(word => !rememberedWords.has(word.word));
+    }
+
+    function displayCard() {
+      const remainingVocabulary = getRemainingVocabulary();
+
+      if (remainingVocabulary.length === 0) {
+        document.querySelector('.card').innerHTML = '<div class="word">🎉 Bạn đã nhớ hết từ!</div>';
+        document.querySelector('.buttons').style.display = 'none'; // Ẩn các nút khi đã nhớ hết từ
+        document.getElementById('resetBtnWrapper').style.display = 'block'; // Hiển thị nút reset
+        updateCounter();
+        return;
+      }
+
+      const cardFront = document.getElementById('card-front');
+      const cardBack = document.getElementById('card-back');
+      const posSection = document.getElementById('pos-sections');
+
+      const word = remainingVocabulary[index];
+      document.getElementById('word').textContent = word.word;
+      document.getElementById('phonetic').textContent = word.phonetic;
+      document.getElementById('level').textContent = word.level;
+      if(!word.audio.us)
+        document.getElementById('btn_us').style.display = 'none';
+      else 
+        document.getElementById('btn_us').style.display = '';
+      if(!word.audio.uk)
+        document.getElementById('btn_uk').style.display = 'none';
+      else 
+      document.getElementById('btn_uk').style.display = '';
+
+
+      let html = '';
+      ['noun', 'verb', 'adjective','other'].forEach(type => {
+        if (word[type]) {
+          if(word[type].pos!="") html += `<div class='pos-title'>${word[type].pos}</div>`;
+          if(word[type].pos!="") html += `<div class='definition'>${word[type].definition}</div>`;
+          if(word[type].example!="") html += `<div class='example'>"${word[type].example}"</div>`;
+        }
+      });
+
+      posSection.innerHTML = html;
+
+      cardFront.style.display = 'block';
+      cardBack.style.display = 'none';
+      flipped = false;
+
+      updateCounter();
+    }
+
+    function flipCard() {
+      const cardFront = document.getElementById('card-front');
+      const cardBack = document.getElementById('card-back');
+      cardFront.style.display = flipped ? 'block' : 'none';
+      cardBack.style.display = flipped ? 'none' : 'block';
+      flipped = !flipped;
+    }
+
+    function randomCard() {
+      const remainingVocabulary = getRemainingVocabulary();
+      if (remainingVocabulary.length === 0) return;
+      let newIndex;
+      do {
+        newIndex = Math.floor(Math.random() * remainingVocabulary.length);
+      } while (newIndex === index && remainingVocabulary.length > 1);
+      index = newIndex;
+      displayCard();
+    }
+
+    function rememberWord() {
+      const remainingVocabulary = getRemainingVocabulary();
+      if (remainingVocabulary.length == 0) {
+        displayCard();
+        return;
+      }
+      rememberedWords.add(remainingVocabulary[index].word);
+      localStorage.setItem('rememberedWords', JSON.stringify(Array.from(rememberedWords)));
+      getRemainingVocabulary().splice(index, 1);
+      if (index >= getRemainingVocabulary().length) index = 0;
+      randomCard();
+    }
+
+    function resetMemory() {
+      rememberedWords.clear();
+      localStorage.removeItem('rememberedWords');
+      location.reload();
+    }
+
+    function playAudio(type) {
+      const audio = document.getElementById('audio');
+      audio.src = getRemainingVocabulary()[index].audio[type];
+      audio.play();
+    }
+    loadVocabularyFromLocalStorage();
+    displayCard();
+    randomCard();
+  </script>
+</body>
+</html>
