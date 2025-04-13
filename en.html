@@ -145,7 +145,7 @@
         location.reload(); // Tải lại trang để cập nhật giao diện
       } catch (error) {
         console.error(error);
-        alert("❌ Lỗi khi tải dữ liệu từ server! Kiểm tra lại đường truyền hoặc URL.");
+        alert("❌ Lỗi: "+error);
       }
     }
     function loadVocabularyFromLocalStorage() {
