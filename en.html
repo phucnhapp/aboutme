@@ -123,6 +123,7 @@
         const response = await fetch(DATA_URL);
         if (!response.ok) throw new Error("Không thể tải dữ liệu từ server.");
         const data = await response.json();
+        localStorage.removeItem('vocabularyData');
         localStorage.setItem('vocabularyData', JSON.stringify(data));
         alert("Đã tải và cập nhật danh sách từ vựng thành công!");
         location.reload(); // Tải lại trang để cập nhật giao diện
@@ -205,8 +206,8 @@
       ['noun', 'verb', 'adjective','other'].forEach(type => {
         if (word[type]) {
           if(word[type].pos!="") html += `<div class='pos-title'>${word[type].pos}</div>`;
-          if(word[type].pos!="") html += `<div class='definition'>${word[type].definition}</div>`;
-          if(word[type].example!="") html += `<div class='example'>"${word[type].example}"</div>`;
+          if(word[type].definition!="") html += `<div class='definition'>${word[type].definition.split(";").join("<br>- ")}</div>`;
+          if(word[type].example!="") html += `<div class='example'>Examples:<br>-"${word[type].example.split(";").join("<br>- ")}"</div>`;
         }
       });
 
