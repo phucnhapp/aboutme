@@ -118,15 +118,15 @@
     </div>
   </div>
   <div class="buttons">
-    <button onclick="rememberWord()">✅ Nhớ từ</button> | 
-    <button onclick="dich()">🔄 Dịch</button> | 
+    <button onclick="rememberWord()">✅ Nhớ từ</button> |
+    <button onclick="dich()">🔄 Dịch</button> |
     <button onclick="randomCard()">🔀 Ngẫu nhiên</button>
   </div>
   <div class="counter">
     Đã nhớ: <span id="remembered-count">0</span> / <span id="total-count">0</span>
   </div>
   <div class="buttons" id="resetBtnWrapper" style="display: block;">
-    <button id="resetBtn" onclick="resetMemory()">🔄 Reset</button>
+    <button id="resetBtn" onclick="resetMemory()">🔄 Học lại từ đầu</button>
   </div>
   <br>
   <div>
@@ -142,71 +142,71 @@
 
   <script>
 
-function refresh_data() {
-  localStorage.removeItem('vocabularyData');
-  alert("❌ OK: Đã xóa dữ liệu từ vựng!");
-  location.reload();
-}
+    function refresh_data() {
+      localStorage.removeItem('vocabularyData');
+      showToast("❌ OK: Đã xóa dữ liệu từ vựng!", "success");
+      location.reload();
+    }
 
-async function fetchAndSaveVocabulary(n) {
-  
-  try {
-    blockUI("🚀 Đang tải từ vựng mới, xin đợi...");
-      let DATA_URL = "https://raw.githubusercontent.com/phucnhapp/aboutme/refs/heads/main/vocab" + n + ".json";
-      const response = await fetch(DATA_URL);
-      if (!response.ok) throw new Error("Không thể tải dữ liệu từ server.");
-      const newData = await response.json();
+    async function fetchAndSaveVocabulary(n) {
 
-      // Giải nén dữ liệu cũ từ LocalStorage nếu có
-      let existingDataCompressed = localStorage.getItem('vocabularyData');
-      let existingData = existingDataCompressed 
+      try {
+        blockUI("🚀 Đang tải từ vựng mới, xin đợi...");
+        let DATA_URL = "https://raw.githubusercontent.com/phucnhapp/aboutme/refs/heads/main/vocab" + n + ".json";
+        const response = await fetch(DATA_URL);
+        if (!response.ok) throw new Error("Không thể tải dữ liệu từ server.");
+        const newData = await response.json();
+
+        // Giải nén dữ liệu cũ từ LocalStorage nếu có
+        let existingDataCompressed = localStorage.getItem('vocabularyData');
+        let existingData = existingDataCompressed
           ? JSON.parse(LZString.decompress(existingDataCompressed))
           : [];
 
-      if (!Array.isArray(existingData)) {
+        if (!Array.isArray(existingData)) {
           existingData = [existingData];
-      }
+        }
 
-      const newArray = Array.isArray(newData) ? newData : [newData];
-      const combinedData = [...existingData, ...newArray];
-// Loại bỏ các từ bị trùng dựa vào key 'word'
-      const uniqueData = [];
+        const newArray = Array.isArray(newData) ? newData : [newData];
+        const combinedData = [...existingData, ...newArray];
+        // Loại bỏ các từ bị trùng dựa vào key 'word'
+        const uniqueData = [];
         const seenWords = new Set();
 
         for (const item of combinedData) {
-            if (item.word && !seenWords.has(item.word)) {
-                seenWords.add(item.word);
-                uniqueData.push(item);
-            }
+          if (item.word && !seenWords.has(item.word)) {
+            seenWords.add(item.word);
+            uniqueData.push(item);
+          }
         }
-      // Nén lại trước khi lưu vào LocalStorage
-      const compressedData = LZString.compress(JSON.stringify(uniqueData));
-      localStorage.setItem('vocabularyData', compressedData);
+        // Nén lại trước khi lưu vào LocalStorage
+        const compressedData = LZString.compress(JSON.stringify(uniqueData));
+        localStorage.setItem('vocabularyData', compressedData);
 
-      alert("✅ Đã tải và cập nhật danh sách từ vựng thành công!");
-      location.reload(); // Tải lại trang để cập nhật giao diện
-  } catch (error) {
-      console.error(error);
-      alert("❌ Lỗi: " + error);
-  }finally {
+        showToast("✅ Đã tải và cập nhật danh sách từ vựng thành công!", "success");
+        location.reload(); // Tải lại trang để cập nhật giao diện
+      } catch (error) {
+        console.error(error);
+        showToast("❌ Lỗi: " + error, "error");
+      } finally {
         unblockUI();
+      }
     }
-}
 
-function loadVocabularyFromLocalStorage() {
-  const savedDataCompressed = localStorage.getItem('vocabularyData');
-  if (savedDataCompressed) {
-      try {
+    function loadVocabularyFromLocalStorage() {
+      const savedDataCompressed = localStorage.getItem('vocabularyData');
+      if (savedDataCompressed) {
+        try {
           vocabulary = JSON.parse(LZString.decompress(savedDataCompressed));
           displayCard(); // Dùng lại hàm cũ để hiển thị thẻ
-      } catch (error) {
+        } catch (error) {
           console.error("Lỗi khi giải nén dữ liệu:", error);
-          alert("❌ Dữ liệu trong LocalStorage bị lỗi, hãy cập nhật lại!");
+          showToast("❌ Dữ liệu trong LocalStorage bị lỗi, hãy cập nhật lại!", "error");
+        }
+      } else {
+        console.warn("⚠️ Không có dữ liệu từ vựng trong LocalStorage, vui lòng nhấn nút Cập Nhật!");
       }
-  } else {
-      console.warn("⚠️ Không có dữ liệu từ vựng trong LocalStorage, vui lòng nhấn nút Cập Nhật!");
-  }
-}
+    }
 
     //     const vocabulary = [
     //     {"word":"a ","phonetic":"/æɪ/","level":"A1","noun":{"pos":"noun","definition":"The name of the Latin script letter A/a.","example":""}, "verb":{"pos":"","definition":"","example":""}, "adjective":{"pos":"","definition":"","example":""}, "other":{"pos":"","definition":"","example":""}, "audio":{"us":"https://api.dictionaryapi.dev/media/pronunciations/en/a-1-us.mp3","uk":""}, "synonyms":"","antonyms":"","status":"Done","timestamp":"" },
@@ -354,57 +354,113 @@ function loadVocabularyFromLocalStorage() {
     displayCard();
     randomCard();
     function blockUI(message = "⏳ Đang xử lý, vui lòng chờ...") {
-    // Nếu đã có, không tạo thêm
-    if (document.getElementById('block-ui-overlay')) return;
+      // Nếu đã có thì không tạo thêm
+      if (document.getElementById('block-ui-overlay')) return;
 
-    const overlay = document.createElement('div');
-    overlay.id = 'block-ui-overlay';
-    overlay.style.position = 'fixed';
-    overlay.style.top = '0';
-    overlay.style.left = '0';
-    overlay.style.width = '100%';
-    overlay.style.height = '100%';
-    overlay.style.backgroundColor = 'rgba(0, 0, 0, 0.5)';
-    overlay.style.display = 'flex';
-    overlay.style.flexDirection = 'column';
-    overlay.style.justifyContent = 'center';
-    overlay.style.alignItems = 'center';
-    overlay.style.zIndex = '9999';
+      const overlay = document.createElement('div');
+      overlay.id = 'block-ui-overlay';
+      overlay.style.position = 'fixed';
+      overlay.style.top = '0';
+      overlay.style.left = '0';
+      overlay.style.width = '100%';
+      overlay.style.height = '100%';
+      overlay.style.backgroundColor = 'rgba(0, 0, 0, 0.88)';
+      overlay.style.display = 'flex';
+      overlay.style.flexDirection = 'column';
+      overlay.style.justifyContent = 'center';
+      overlay.style.alignItems = 'center';
+      overlay.style.zIndex = '9999';
+      overlay.style.opacity = '0';
+      overlay.style.transition = 'opacity 0.5s ease';
 
-    const text = document.createElement('div');
-    text.innerText = message;
-    text.style.color = 'white';
-    text.style.fontSize = '20px';
-    text.style.marginTop = '10px';
-    text.style.textAlign = 'center';
+      const spinner = document.createElement('div');
+      spinner.style.border = '6px solid #f3f3f3';
+      spinner.style.borderTop = '6px solid #3498db';
+      spinner.style.borderRadius = '50%';
+      spinner.style.width = '50px';
+      spinner.style.height = '50px';
+      spinner.style.animation = 'spin 1s linear infinite';
 
-    const spinner = document.createElement('div');
-    spinner.style.border = '6px solid #f3f3f3';
-    spinner.style.borderTop = '6px solid #3498db';
-    spinner.style.borderRadius = '50%';
-    spinner.style.width = '50px';
-    spinner.style.height = '50px';
-    spinner.style.animation = 'spin 1s linear infinite';
+      const text = document.createElement('div');
+      text.innerText = message;
+      text.style.color = 'white';
+      text.style.fontSize = '20px';
+      text.style.marginTop = '10px';
+      text.style.textAlign = 'center';
 
-    overlay.appendChild(spinner);
-    overlay.appendChild(text);
-    document.body.appendChild(overlay);
+      overlay.appendChild(spinner);
+      overlay.appendChild(text);
+      document.body.appendChild(overlay);
 
-    // Tạo hiệu ứng quay cho spinner
-    const style = document.createElement('style');
-    style.innerHTML = `
+      // Tạo hiệu ứng quay cho spinner
+      const style = document.createElement('style');
+      style.innerHTML = `
       @keyframes spin {
         0% { transform: rotate(0deg); }
         100% { transform: rotate(360deg); }
       }
     `;
-    document.head.appendChild(style);
-}
+      document.head.appendChild(style);
 
-function unblockUI() {
-    const overlay = document.getElementById('block-ui-overlay');
-    if (overlay) overlay.remove();
-}
+      // Kích hoạt fade-in sau khi append
+      requestAnimationFrame(() => {
+        overlay.style.opacity = '1';
+      });
+    }
+
+    function unblockUI() {
+      const overlay = document.getElementById('block-ui-overlay');
+      if (overlay) {
+        overlay.style.opacity = '0';
+        overlay.addEventListener('transitionend', () => {
+          if (overlay.parentNode) overlay.remove();
+        }, { once: true });
+      }
+    }
+    function showToast(message, type = "info", duration = 3000) {
+      const toast = document.createElement("div");
+      toast.className = `custom-toast ${type}`;
+      toast.innerText = message;
+
+      document.body.appendChild(toast);
+
+      // Force reflow để kích hoạt transition
+      getComputedStyle(toast).opacity;
+      toast.style.transform = "translateY(0)";
+      toast.style.opacity = "1";
+
+      setTimeout(() => {
+        toast.style.opacity = "0";
+        toast.style.transform = "translateY(-20px)";
+        toast.addEventListener("transitionend", () => toast.remove(), { once: true });
+      }, duration);
+    }
+
+    // Thêm CSS vào trang
+    const toastStyle = document.createElement('style');
+    toastStyle.innerHTML = `   .custom-toast {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: rgba(30, 30, 30, 0.9);
+    color: white;
+    padding: 12px 20px;
+    border-radius: 8px;
+    font-size: 16px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    z-index: 9999;
+    opacity: 0;
+    transform: translateY(-20px);
+    transition: all 0.5s ease;
+    max-width: 300px;
+    word-wrap: break-word;
+  }
+  .custom-toast.success { background: #28a745; }
+  .custom-toast.error { background: #dc3545; }
+  .custom-toast.info { background: #17a2b8; }
+  .custom-toast.warning { background: #ffc107; color: black; }`;
+    document.head.appendChild(toastStyle);
+
 
   </script>
 </body>
