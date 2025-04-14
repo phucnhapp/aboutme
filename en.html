@@ -118,7 +118,8 @@
     </div>
   </div>
   <div class="buttons">
-    <button onclick="rememberWord()">✅ Nhớ từ</button>
+    <button onclick="rememberWord()">✅ Nhớ từ</button> | 
+    <button onclick="dich()">🔄 Dịch</button> | 
     <button onclick="randomCard()">🔀 Ngẫu nhiên</button>
   </div>
   <div class="counter">
@@ -126,8 +127,8 @@
   </div>
   <div class="buttons" id="resetBtnWrapper" style="display: block;">
     <button id="resetBtn" onclick="resetMemory()">🔄 Reset</button>
-    <button onclick="dich()">🔄 Dịch</button>
   </div>
+  <br>
   <div>
     <button onclick="refresh_data()">🔄 Refresh dữ liệu</button>
     <button id="reloadBtn" onclick="fetchAndSaveVocabulary(1)">🔄 Vocab 1</button>
@@ -148,7 +149,9 @@ function refresh_data() {
 }
 
 async function fetchAndSaveVocabulary(n) {
+  
   try {
+    blockUI("🚀 Đang tải từ vựng mới, xin đợi...");
       let DATA_URL = "https://raw.githubusercontent.com/phucnhapp/aboutme/refs/heads/main/vocab" + n + ".json";
       const response = await fetch(DATA_URL);
       if (!response.ok) throw new Error("Không thể tải dữ liệu từ server.");
@@ -166,9 +169,18 @@ async function fetchAndSaveVocabulary(n) {
 
       const newArray = Array.isArray(newData) ? newData : [newData];
       const combinedData = [...existingData, ...newArray];
+// Loại bỏ các từ bị trùng dựa vào key 'word'
+      const uniqueData = [];
+        const seenWords = new Set();
 
+        for (const item of combinedData) {
+            if (item.word && !seenWords.has(item.word)) {
+                seenWords.add(item.word);
+                uniqueData.push(item);
+            }
+        }
       // Nén lại trước khi lưu vào LocalStorage
-      const compressedData = LZString.compress(JSON.stringify(combinedData));
+      const compressedData = LZString.compress(JSON.stringify(uniqueData));
       localStorage.setItem('vocabularyData', compressedData);
 
       alert("✅ Đã tải và cập nhật danh sách từ vựng thành công!");
@@ -176,7 +188,9 @@ async function fetchAndSaveVocabulary(n) {
   } catch (error) {
       console.error(error);
       alert("❌ Lỗi: " + error);
-  }
+  }finally {
+        unblockUI();
+    }
 }
 
 function loadVocabularyFromLocalStorage() {
@@ -339,6 +353,59 @@ function loadVocabularyFromLocalStorage() {
     loadVocabularyFromLocalStorage();
     displayCard();
     randomCard();
+    function blockUI(message = "⏳ Đang xử lý, vui lòng chờ...") {
+    // Nếu đã có, không tạo thêm
+    if (document.getElementById('block-ui-overlay')) return;
+
+    const overlay = document.createElement('div');
+    overlay.id = 'block-ui-overlay';
+    overlay.style.position = 'fixed';
+    overlay.style.top = '0';
+    overlay.style.left = '0';
+    overlay.style.width = '100%';
+    overlay.style.height = '100%';
+    overlay.style.backgroundColor = 'rgba(0, 0, 0, 0.5)';
+    overlay.style.display = 'flex';
+    overlay.style.flexDirection = 'column';
+    overlay.style.justifyContent = 'center';
+    overlay.style.alignItems = 'center';
+    overlay.style.zIndex = '9999';
+
+    const text = document.createElement('div');
+    text.innerText = message;
+    text.style.color = 'white';
+    text.style.fontSize = '20px';
+    text.style.marginTop = '10px';
+    text.style.textAlign = 'center';
+
+    const spinner = document.createElement('div');
+    spinner.style.border = '6px solid #f3f3f3';
+    spinner.style.borderTop = '6px solid #3498db';
+    spinner.style.borderRadius = '50%';
+    spinner.style.width = '50px';
+    spinner.style.height = '50px';
+    spinner.style.animation = 'spin 1s linear infinite';
+
+    overlay.appendChild(spinner);
+    overlay.appendChild(text);
+    document.body.appendChild(overlay);
+
+    // Tạo hiệu ứng quay cho spinner
+    const style = document.createElement('style');
+    style.innerHTML = `
+      @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+      }
+    `;
+    document.head.appendChild(style);
+}
+
+function unblockUI() {
+    const overlay = document.getElementById('block-ui-overlay');
+    if (overlay) overlay.remove();
+}
+
   </script>
 </body>
 
