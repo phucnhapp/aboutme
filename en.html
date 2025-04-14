@@ -125,22 +125,28 @@
   </div>
   <div class="buttons" id="resetBtnWrapper" style="display: block;">
     <button id="resetBtn" onclick="resetMemory()">🔄 Reset</button>
-    <button id="reloadBtn" onclick="fetchAndSaveVocabulary()">🔄 Cập nhật từ server</button>
     <button onclick="dich()">🔄 Dịch</button>
+  </div>
+  <div>
+    <button id="reloadBtn" onclick="fetchAndSaveVocabulary(1)">🔄 Sycn link 1</button>
   </div>
 
   <audio id="audio"></audio>
 
   <script>
-    const DATA_URL = "https://raw.githubusercontent.com/phucnhapp/aboutme/refs/heads/main/vocabulary.json"; // Thay link thật của bạn vào đây
+     // Thay link thật của bạn vào đây
 
-    async function fetchAndSaveVocabulary() {
+    async function fetchAndSaveVocabulary(n) {
       try {
+        // let DATA_URL = "https://raw.githubusercontent.com/phucnhapp/aboutme/refs/heads/main/vocab"+n+".json";
+        let DATA_URL = "D:\Project\aboutme\vocab"+n+".json";
         const response = await fetch(DATA_URL);
         if (!response.ok) throw new Error("Không thể tải dữ liệu từ server.");
         const data = await response.json();
-        localStorage.removeItem('vocabularyData');
-        localStorage.setItem('vocabularyData', JSON.stringify(data));
+        // localStorage.removeItem('vocabularyData');
+        savedData = localStorage.getItem('vocabularyData');
+        savedData.push(data);
+        // localStorage.setItem('vocabularyData', JSON.stringify(data));
         alert("Đã tải và cập nhật danh sách từ vựng thành công!");
         location.reload(); // Tải lại trang để cập nhật giao diện
       } catch (error) {
