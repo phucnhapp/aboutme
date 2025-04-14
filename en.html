@@ -5,6 +5,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Flashcard Vocabulary App</title>
+  <script src="https://cdn.jsdelivr.net/npm/lz-string@1.4.4/libs/lz-string.min.js"></script>
   <style>
     body {
       font-family: 'Segoe UI', sans-serif;
@@ -128,41 +129,70 @@
     <button onclick="dich()">🔄 Dịch</button>
   </div>
   <div>
-    <button id="reloadBtn" onclick="fetchAndSaveVocabulary(1)">🔄 Sycn link 1</button>
+    <button onclick="refresh_data()">🔄 Refresh dữ liệu</button>
+    <button id="reloadBtn" onclick="fetchAndSaveVocabulary(1)">🔄 Vocab 1</button>
+    <button id="reloadBtn" onclick="fetchAndSaveVocabulary(2)">🔄 Vocab 2</button>
+    <button id="reloadBtn" onclick="fetchAndSaveVocabulary(3)">🔄 Vocab 3</button>
+    <button id="reloadBtn" onclick="fetchAndSaveVocabulary(4)">🔄 Vocab 4</button>
+    <button id="reloadBtn" onclick="fetchAndSaveVocabulary(5)">🔄 Vocab 5</button>
   </div>
 
   <audio id="audio"></audio>
 
   <script>
-     // Thay link thật của bạn vào đây
 
-    async function fetchAndSaveVocabulary(n) {
+function refresh_data() {
+  localStorage.removeItem('vocabularyData');
+  alert("❌ OK: Đã xóa dữ liệu từ vựng!");
+  location.reload();
+}
+
+async function fetchAndSaveVocabulary(n) {
+  try {
+      let DATA_URL = "https://raw.githubusercontent.com/phucnhapp/aboutme/refs/heads/main/vocab" + n + ".json";
+      const response = await fetch(DATA_URL);
+      if (!response.ok) throw new Error("Không thể tải dữ liệu từ server.");
+      const newData = await response.json();
+
+      // Giải nén dữ liệu cũ từ LocalStorage nếu có
+      let existingDataCompressed = localStorage.getItem('vocabularyData');
+      let existingData = existingDataCompressed 
+          ? JSON.parse(LZString.decompress(existingDataCompressed))
+          : [];
+
+      if (!Array.isArray(existingData)) {
+          existingData = [existingData];
+      }
+
+      const newArray = Array.isArray(newData) ? newData : [newData];
+      const combinedData = [...existingData, ...newArray];
+
+      // Nén lại trước khi lưu vào LocalStorage
+      const compressedData = LZString.compress(JSON.stringify(combinedData));
+      localStorage.setItem('vocabularyData', compressedData);
+
+      alert("✅ Đã tải và cập nhật danh sách từ vựng thành công!");
+      location.reload(); // Tải lại trang để cập nhật giao diện
+  } catch (error) {
+      console.error(error);
+      alert("❌ Lỗi: " + error);
+  }
+}
+
+function loadVocabularyFromLocalStorage() {
+  const savedDataCompressed = localStorage.getItem('vocabularyData');
+  if (savedDataCompressed) {
       try {
-        // let DATA_URL = "https://raw.githubusercontent.com/phucnhapp/aboutme/refs/heads/main/vocab"+n+".json";
-        let DATA_URL = "D:\Project\aboutme\vocab"+n+".json";
-        const response = await fetch(DATA_URL);
-        if (!response.ok) throw new Error("Không thể tải dữ liệu từ server.");
-        const data = await response.json();
-        // localStorage.removeItem('vocabularyData');
-        savedData = localStorage.getItem('vocabularyData');
-        savedData.push(data);
-        // localStorage.setItem('vocabularyData', JSON.stringify(data));
-        alert("Đã tải và cập nhật danh sách từ vựng thành công!");
-        location.reload(); // Tải lại trang để cập nhật giao diện
+          vocabulary = JSON.parse(LZString.decompress(savedDataCompressed));
+          displayCard(); // Dùng lại hàm cũ để hiển thị thẻ
       } catch (error) {
-        console.error(error);
-        alert("❌ Lỗi: "+error);
+          console.error("Lỗi khi giải nén dữ liệu:", error);
+          alert("❌ Dữ liệu trong LocalStorage bị lỗi, hãy cập nhật lại!");
       }
-    }
-    function loadVocabularyFromLocalStorage() {
-      const savedData = localStorage.getItem('vocabularyData');
-      if (savedData) {
-        vocabulary = JSON.parse(savedData);
-        displayCard(); // Dùng lại hàm cũ để hiển thị thẻ
-      } else {
-        console.warn("Không có dữ liệu từ vựng trong LocalStorage, vui lòng nhấn nút Cập Nhật!");
-      }
-    }
+  } else {
+      console.warn("⚠️ Không có dữ liệu từ vựng trong LocalStorage, vui lòng nhấn nút Cập Nhật!");
+  }
+}
 
     //     const vocabulary = [
     //     {"word":"a ","phonetic":"/æɪ/","level":"A1","noun":{"pos":"noun","definition":"The name of the Latin script letter A/a.","example":""}, "verb":{"pos":"","definition":"","example":""}, "adjective":{"pos":"","definition":"","example":""}, "other":{"pos":"","definition":"","example":""}, "audio":{"us":"https://api.dictionaryapi.dev/media/pronunciations/en/a-1-us.mp3","uk":""}, "synonyms":"","antonyms":"","status":"Done","timestamp":"" },
@@ -244,17 +274,17 @@
       updateCounter();
     }
     function dich() {
-      if(flipped==false) flipCard();
-      for(let i=0; i<=2; i++){
-        if(document.getElementsByClassName('definition')[i].innerText.length>0){
+      if (flipped == false) flipCard();
+      for (let i = 0; i <= 2; i++) {
+        if (document.getElementsByClassName('definition')[i].innerText.length > 0) {
           let ori = document.getElementsByClassName('definition')[i].innerText.substring(0, 500);
-          document.getElementsByClassName('definition')[i].innerHTML  = "<img src='https://i.giphy.com/kUTME7ABmhYg5J3psM.webp' style='width: 150px;'/>";
-          fetch("https://api.mymemory.translated.net/get?q="+ori+"&langpair=en|vi")
-          .then(response => response.json())
-          .then(data => {
-            document.getElementsByClassName('definition')[i].innerText=data.responseData.translatedText.split("-").join("\n- ");
-          })
-          .catch(error => console.error("Lỗi:", error));
+          document.getElementsByClassName('definition')[i].innerHTML = "<img src='https://i.giphy.com/kUTME7ABmhYg5J3psM.webp' style='width: 150px;'/>";
+          fetch("https://api.mymemory.translated.net/get?q=" + ori + "&langpair=en|vi")
+            .then(response => response.json())
+            .then(data => {
+              document.getElementsByClassName('definition')[i].innerText = data.responseData.translatedText.split("-").join("\n- ");
+            })
+            .catch(error => console.error("Lỗi:", error));
         }
       }
     }
@@ -296,10 +326,10 @@
       location.reload();
     }
 
-    function speak(){
-            const utter = new SpeechSynthesisUtterance(document.getElementById('word').innerText);
-              utter.lang = "en-US";
-            speechSynthesis.speak(utter);
+    function speak() {
+      const utter = new SpeechSynthesisUtterance(document.getElementById('word').innerText);
+      utter.lang = "en-US";
+      speechSynthesis.speak(utter);
     }
     function playAudio(type) {
       const audio = document.getElementById('audio');
