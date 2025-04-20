@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ghi chú đơn giản</title>
+    <script src="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.js"></script>
+    <style>
+        .alert {
+            background-color: #ffcc00;
+            color: #000;
+            padding: 10px;
+            margin-top: 10px;
+            border-radius: 5px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 font-sans flex items-center justify-center h-screen">
+
+    <div class="bg-white p-8 rounded-lg shadow-xl w-full max-w-lg">
+        <h1 class="text-3xl font-bold text-center text-gray-800 mb-6">Ứng Dụng Ghi Chú</h1>
+        <form id="noteForm" class="space-y-4">
+            <input type="text" id="noteTitle" placeholder="Tiêu đề ghi chú" class="w-full p-3 rounded border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+            <textarea id="noteContent" placeholder="Nội dung ghi chú" class="w-full p-3 rounded border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500" required></textarea>
+            <input type="datetime-local" id="reminderTime" class="w-full p-3 rounded border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <button type="submit" class="w-full p-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700">Lưu Ghi Chú</button>
+        </form>
+
+        <ul id="noteList" class="mt-8 space-y-4">
+            <!-- Các ghi chú sẽ được hiển thị ở đây -->
+        </ul>
+
+        <div id="alertContainer"></div>
+    </div>
+
+    <script>
+        const noteForm = document.getElementById('noteForm');
+        const noteTitle = document.getElementById('noteTitle');
+        const noteContent = document.getElementById('noteContent');
+        const reminderTime = document.getElementById('reminderTime');
+        const noteList = document.getElementById('noteList');
+        const alertContainer = document.getElementById('alertContainer');
+
+        // Lưu ghi chú vào localStorage
+        function saveNotes() {
+            const notes = getNotes();
+            const newNote = {
+                title: noteTitle.value,
+                content: noteContent.value,
+                reminderTime: reminderTime.value,
+                id: new Date().getTime() 
+            };
+            notes.push(newNote);
+            localStorage.setItem('notes', JSON.stringify(notes));
+            renderNotes();
+        }
+
+        // Lấy ghi chú từ localStorage
+        function getNotes() {
+            const notes = localStorage.getItem('notes');
+            return notes ? JSON.parse(notes) : [];
+        }
+
+        // Hiển thị các ghi chú
+        function renderNotes() {
+            const notes = getNotes();
+            noteList.innerHTML = '';
+            notes.forEach(note => {
+                const li = document.createElement('li');
+                li.classList.add('bg-gray-50', 'p-4', 'rounded-lg', 'shadow-md', 'flex', 'justify-between', 'items-center');
+                li.innerHTML = `
+                    <div>
+                        <h3 class="font-bold text-xl text-gray-800">${note.title}</h3>
+                        <p class="text-gray-600">${note.content}</p>
+                        <small class="text-sm text-gray-400">Nhắc nhở lúc: ${new Date(note.reminderTime).toLocaleString()}</small>
+                    </div>
+                    <button onclick="deleteNote(${note.id})" class="bg-red-500 text-white p-2 rounded-lg hover:bg-red-600">Xóa</button>
+                `;
+                noteList.appendChild(li);
+                checkReminder(note);
+            });
+        }
+
+        // Xóa ghi chú
+        function deleteNote(id) {
+            let notes = getNotes();
+            notes = notes.filter(note => note.id !== id);
+            localStorage.setItem('notes', JSON.stringify(notes));
+            renderNotes();
+        }
+
+        // Kiểm tra nhắc nhở
+        function checkReminder(note) {
+            const currentTime = new Date().getTime();
+            const reminderTime = new Date(note.reminderTime).getTime();
+
+            if (reminderTime <= currentTime && !note.reminded) {
+                alertContainer.innerHTML = `<div class="alert">Nhắc nhở: ${note.title} - ${note.content}</div>`;
+                note.reminded = true;
+                saveNotes();
+            }
+        }
+
+        // Sự kiện khi người dùng gửi form
+        noteForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            if (noteTitle.value && noteContent.value && reminderTime.value) {
+                saveNotes();
+                noteTitle.value = '';
+                noteContent.value = '';
+                reminderTime.value = '';
+            }
+        });
+
+        // Hiển thị ghi chú khi trang tải
+        renderNotes();
+    </script>
+
+</body>
+</html>

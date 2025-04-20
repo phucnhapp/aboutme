@@ -104,23 +104,24 @@
   <h1>Flashcard Học Từ Vựng</h1>
   <div class="card" onclick="flipCard()">
     <div id="card-front" style="min-height: 150px;">
-      <div class="word" id="word">serene</div>
-      <div class="phonetic" id="phonetic">/səˈriːn/</div>
+      <div class="word" id="word">-word-</div>
+      <div class="phonetic" id="phonetic">/----/</div>
+      <div class="word" id="meaning"><img src='https://i.giphy.com/kUTME7ABmhYg5J3psM.webp' style='width: 150px;'/></div>
       <div class="buttons">
         <button onclick="speak(); event.stopPropagation();">🔊 Speak</button>
         <button id="btn_us" onclick="playAudio('us'); event.stopPropagation();">🔊 US</button>
         <button id="btn_uk" onclick="playAudio('uk'); event.stopPropagation();">🔊 UK</button>
       </div>
-      <div>Level: <span id="level">C1</span></div>
+      <div>Level: <span id="level">-level-</span></div>
     </div>
     <div id="card-back" style="display:none">
       <div id="pos-sections"></div>
     </div>
   </div>
   <div class="buttons">
-    <button onclick="rememberWord()">✅ Nhớ từ</button> |
-    <button onclick="dich()">🔄 Dịch</button> |
-    <button onclick="randomCard()">🔀 Ngẫu nhiên</button>
+    <button onclick="rememberWord()">✅ I Remember</button> |
+    <button onclick="dich()">🔄 Translate</button> |
+    <button onclick="randomCard()">🔀 Random word</button>
   </div>
   <div class="counter">
     Đã nhớ: <span id="remembered-count">0</span> / <span id="total-count">0</span>
@@ -130,12 +131,12 @@
   </div>
   <br>
   <div>
-    <button onclick="refresh_data()">🔄 Refresh dữ liệu</button>
-    <button id="reloadBtn" onclick="fetchAndSaveVocabulary(1)">🔄 Vocab 1</button>
-    <button id="reloadBtn" onclick="fetchAndSaveVocabulary(2)">🔄 Vocab 2</button>
-    <button id="reloadBtn" onclick="fetchAndSaveVocabulary(3)">🔄 Vocab 3</button>
-    <button id="reloadBtn" onclick="fetchAndSaveVocabulary(4)">🔄 Vocab 4</button>
-    <button id="reloadBtn" onclick="fetchAndSaveVocabulary(5)">🔄 Vocab 5</button>
+    <button onclick="refresh_data()">🔄 Refresh Vocab</button>
+    <button id="reloadBtn" onclick="fetchAndSaveVocabulary(1)">🔄 Install Vocab 1</button>
+    <button id="reloadBtn" onclick="fetchAndSaveVocabulary(2)">🔄 Install Vocab 2</button>
+    <button id="reloadBtn" onclick="fetchAndSaveVocabulary(3)">🔄 Install Vocab 3</button>
+    <button id="reloadBtn" onclick="fetchAndSaveVocabulary(4)">🔄 Install Vocab 4</button>
+    <button id="reloadBtn" onclick="fetchAndSaveVocabulary(5)">🔄 Install Vocab 5</button>
   </div>
 
   <audio id="audio"></audio>
@@ -241,7 +242,6 @@
 
     function displayCard() {
       const remainingVocabulary = getRemainingVocabulary();
-
       if (remainingVocabulary.length === 0) {
         document.querySelector('.card').innerHTML = '<div class="word">🎉 Bạn đã nhớ hết từ!</div>';
         document.querySelector('.buttons').style.display = 'none'; // Ẩn các nút khi đã nhớ hết từ
@@ -253,9 +253,16 @@
       const cardFront = document.getElementById('card-front');
       const cardBack = document.getElementById('card-back');
       const posSection = document.getElementById('pos-sections');
-
+      
       const word = remainingVocabulary[index];
       document.getElementById('word').textContent = word.word;
+      fetch("https://api.mymemory.translated.net/get?q=" + word.word + "&langpair=en|vi")
+        .then(response => response.json())
+        .then(data => {
+          console.log(data);
+          document.getElementById('meaning').innerText = data.responseData.translatedText;
+        })
+        .catch(error => console.error("Lỗi:", error));
       document.getElementById('phonetic').textContent = word.phonetic;
       document.getElementById('level').textContent = word.level;
       if (!word.audio.us)
@@ -301,6 +308,7 @@
             .catch(error => console.error("Lỗi:", error));
         }
       }
+
     }
     function flipCard() {
       const cardFront = document.getElementById('card-front');
@@ -312,6 +320,7 @@
 
     function randomCard() {
       const remainingVocabulary = getRemainingVocabulary();
+      document.getElementById('meaning').innerText ="-";
       if (remainingVocabulary.length === 0) return;
       let newIndex;
       do {
@@ -319,6 +328,7 @@
       } while (newIndex === index && remainingVocabulary.length > 1);
       index = newIndex;
       displayCard();
+      speak();
     }
 
     function rememberWord() {
@@ -351,8 +361,8 @@
       audio.play();
     }
     loadVocabularyFromLocalStorage();
-    displayCard();
-    randomCard();
+    // displayCard();
+    // randomCard();
     function blockUI(message = "⏳ Đang xử lý, vui lòng chờ...") {
       // Nếu đã có thì không tạo thêm
       if (document.getElementById('block-ui-overlay')) return;

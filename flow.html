@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Flowchart with jsGraph</title>
+  <script src="https://jsgraph.org/js/jsgraph/jsgraph.js"></script>
+  <style>
+    .node {
+      padding: 10px;
+      background-color: #f0f0f0;
+      border: 1px solid #ccc;
+      text-align: center;
+      cursor: pointer;
+    }
+    #graph-container {
+      width: 100%;
+      height: 600px;
+      border: 1px solid #ccc;
+      position: relative;
+    }
+    .toolbar {
+      margin: 10px;
+    }
+    button {
+      padding: 10px 20px;
+      margin: 5px;
+      border: none;
+      cursor: pointer;
+      background-color: #3498db;
+      color: white;
+    }
+  </style>
+</head>
+<body>
+
+<div class="toolbar">
+  <button onclick="addNode()">Thêm Node</button>
+  <button onclick="exportJSON()">Xuất JSON</button>
+</div>
+
+<div id="graph-container"></div>
+
+<script>
+  // Khởi tạo Graph từ thư viện jsGraph
+  const graph = new jsgraph.Graph({
+    container: 'graph-container',
+    nodeWidth: 100,
+    nodeHeight: 50,
+    nodeColor: '#f0f0f0',
+    nodeBorder: '#ccc',
+    edgeColor: '#3498db',
+    edgeWidth: 2,
+    allowNodeDrag: true,
+    allowEdgeConnect: true
+  });
+
+  let nodeId = 1;
+  let nodes = [];
+
+  // Thêm node mới vào sơ đồ
+  function addNode() {
+    const nodeName = "Node " + nodeId;
+    const node = graph.addNode(nodeName, 100 + (Math.random() * 400), 100 + (Math.random() * 400));
+    nodes.push(node);
+    nodeId++;
+  }
+
+  // Xuất JSON dữ liệu của sơ đồ
+  function exportJSON() {
+    const json = graph.toJSON();
+    console.log(JSON.stringify(json, null, 2));
+  }
+
+  // Đảm bảo cho phép kéo thả các node trong graph
+  graph.on('nodeDragged', function(node) {
+    console.log('Node bị kéo: ', node);
+  });
+
+</script>
+
+</body>
+</html>

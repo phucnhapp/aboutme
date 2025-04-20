@@ -1,0 +1,14 @@
+{
+  "manifest_version": 3,
+  "name": "Student Score Auto-Fill",
+  "version": "1.0",
+  "description": "Điền điểm vào website từ Google Sheet JSON",
+  "permissions": ["activeTab", "scripting"],
+  "action": {
+    "default_popup": "popup.html"
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "host_permissions": ["<all_urls>"]
+}
