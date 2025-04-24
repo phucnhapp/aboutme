@@ -151,8 +151,9 @@
     
     <!-- HTML -->
         
-  <h1>Flashcard Học Từ Vựng</h1>
+  <h1>Vocab Phúc Nguyễn</h1>
   <div class="card" onclick="flipCard()">
+    <span>Bấm vào từ vựng để xem nghĩa và ví dụ</span>
     <div id="card-front" style="min-height: 150px;">
       <div class="word" id="word">-word-</div>
       <div class="phonetic" id="phonetic">/----/</div>
@@ -169,14 +170,18 @@
       <div id="pos-sections"></div>
     </div>
   </div>
+  <br>
+  Auto đọc và chuyển từ
+  <label class="switch">
+    
+    <input type="checkbox" id="myToggle">
+    <span class="slider"></span>
+  </label>
   <div class="buttons">
     <button onclick="rememberWord()">✅ I Remember</button> |
     <button onclick="dich()">🔄 Translate</button> |
     <button onclick="randomCard()">🔀 Random word</button>
-    <label class="switch">
-      <input type="checkbox" id="myToggle">
-      <span class="slider"></span>
-    </label>
+    
 
   </div>
   <div class="counter">
@@ -255,7 +260,8 @@
       if (savedDataCompressed) {
         try {
           vocabulary = JSON.parse(LZString.decompress(savedDataCompressed));
-          displayCard(); // Dùng lại hàm cũ để hiển thị thẻ
+          // displayCard(); // Dùng lại hàm cũ để hiển thị thẻ
+          randomCard();
         } catch (error) {
           console.error("Lỗi khi giải nén dữ liệu:", error);
           showToast("❌ Dữ liệu trong LocalStorage bị lỗi, hãy cập nhật lại!", "error");
@@ -305,7 +311,6 @@
         updateCounter();
         return;
       }
-
       const cardFront = document.getElementById('card-front');
       const cardBack = document.getElementById('card-back');
       const posSection = document.getElementById('pos-sections');
@@ -422,7 +427,6 @@
     }
     let auto=false;
     async function loopSpeakAndChange(times = 3, delayMs = 3000) {
-
       while (auto==true) {  // Lặp mãi mãi như tiếng chuông chùa
         for (let i = 0; i < times; i++) {
           speak("en-US",'word');
