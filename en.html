@@ -101,14 +101,65 @@
 </head>
 
 <body>
+  <style>
+    /* Khung chứa nút */
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 60px;
+      height: 34px;
+    }
+    
+    /* Ẩn checkbox thật */
+    .switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+    
+    /* Thanh gạt */
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0; left: 0;
+      right: 0; bottom: 0;
+      background-color: #ccc;
+      transition: .4s;
+      border-radius: 34px;
+    }
+    
+    /* Nút tròn */
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 26px; width: 26px;
+      left: 4px; bottom: 4px;
+      background-color: white;
+      transition: .4s;
+      border-radius: 50%;
+    }
+    
+    /* Khi checkbox được chọn */
+    input:checked + .slider {
+      background-color: #4CAF50;
+    }
+    
+    input:checked + .slider:before {
+      transform: translateX(26px);
+    }
+    </style>
+    
+    <!-- HTML -->
+        
   <h1>Flashcard Học Từ Vựng</h1>
   <div class="card" onclick="flipCard()">
     <div id="card-front" style="min-height: 150px;">
       <div class="word" id="word">-word-</div>
       <div class="phonetic" id="phonetic">/----/</div>
-      <div class="word" id="meaning"><img src='https://i.giphy.com/kUTME7ABmhYg5J3psM.webp' style='width: 150px;'/></div>
+      <div class="word" id="meaning"><img src='https://i.giphy.com/kUTME7ABmhYg5J3psM.webp' style='width: 150px;' />
+      </div>
       <div class="buttons">
-        <button onclick="speak(); event.stopPropagation();">🔊 Speak</button>
+        <button id="btn_speak" onclick="speak('en-US','word'); event.stopPropagation();">🔊 Speak</button>
         <button id="btn_us" onclick="playAudio('us'); event.stopPropagation();">🔊 US</button>
         <button id="btn_uk" onclick="playAudio('uk'); event.stopPropagation();">🔊 UK</button>
       </div>
@@ -122,6 +173,11 @@
     <button onclick="rememberWord()">✅ I Remember</button> |
     <button onclick="dich()">🔄 Translate</button> |
     <button onclick="randomCard()">🔀 Random word</button>
+    <label class="switch">
+      <input type="checkbox" id="myToggle">
+      <span class="slider"></span>
+    </label>
+
   </div>
   <div class="counter">
     Đã nhớ: <span id="remembered-count">0</span> / <span id="total-count">0</span>
@@ -253,7 +309,7 @@
       const cardFront = document.getElementById('card-front');
       const cardBack = document.getElementById('card-back');
       const posSection = document.getElementById('pos-sections');
-      
+
       const word = remainingVocabulary[index];
       document.getElementById('word').textContent = word.word;
       fetch("https://api.mymemory.translated.net/get?q=" + word.word + "&langpair=en|vi")
@@ -317,10 +373,13 @@
       cardBack.style.display = flipped ? 'none' : 'block';
       flipped = !flipped;
     }
+    function delay(ms) {
+      return new Promise(resolve => setTimeout(resolve, ms));
+    }
 
     function randomCard() {
       const remainingVocabulary = getRemainingVocabulary();
-      document.getElementById('meaning').innerText ="-";
+      document.getElementById('meaning').innerText = "-";
       if (remainingVocabulary.length === 0) return;
       let newIndex;
       do {
@@ -328,7 +387,7 @@
       } while (newIndex === index && remainingVocabulary.length > 1);
       index = newIndex;
       displayCard();
-      speak();
+      // speak();
     }
 
     function rememberWord() {
@@ -350,16 +409,42 @@
       location.reload();
     }
 
-    function speak() {
-      const utter = new SpeechSynthesisUtterance(document.getElementById('word').innerText);
-      utter.lang = "en-US";
+    function speak(lang="en-US",id="word") {
+      const utter = new SpeechSynthesisUtterance(document.getElementById(id).innerText);
+      utter.lang = lang;
       speechSynthesis.speak(utter);
     }
+      
     function playAudio(type) {
       const audio = document.getElementById('audio');
       audio.src = getRemainingVocabulary()[index].audio[type];
       audio.play();
     }
+    let auto=false;
+    async function loopSpeakAndChange(times = 3, delayMs = 3000) {
+
+      while (auto==true) {  // Lặp mãi mãi như tiếng chuông chùa
+        for (let i = 0; i < times; i++) {
+          speak("en-US",'word');
+          // speak("vi-VI",'meaning');
+          await new Promise(resolve => setTimeout(resolve, delayMs));  // Chờ giữa lần đọc
+        }
+        randomCard();  // Đổi sang từ khác
+        console.log("--- Đổi sang từ mới: ", "---");
+        await new Promise(resolve => setTimeout(resolve, delayMs));  // Nghỉ trước khi bắt đầu từ mới
+      }
+    }
+    document.getElementById('myToggle').addEventListener("click", function() {
+      if(this.checked==true){
+        console.log('active auto');
+        auto=true;
+        loopSpeakAndChange();
+      }else{
+        auto=false;
+        console.log('deactive auto');
+      }
+    });
+    
     loadVocabularyFromLocalStorage();
     // displayCard();
     // randomCard();
