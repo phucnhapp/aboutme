@@ -1,7 +1,0 @@
-Nhap a: Nhap b: Uoc so chung cua 7 va 3 la: 1 
-Uoc chung lon nhat: 1
-Cac so hoan thien trong khoang (3, 7): 6 
-7 la so nguyen to.
-3 la so nguyen to.
-Cac so nguyen to trong khoang (7, 3): 5 
-Nhap n: Tong S = -7.66667

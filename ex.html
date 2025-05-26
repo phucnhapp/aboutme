@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Xuất từ vựng theo cấp độ</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/lz-string@1.4.4/libs/lz-string.min.js"></script>
+</head>
+<body>
+  <button onclick="exportToExcel()">Xuất dữ liệu từ Local Storage ra Excel</button>
+
+  <script>
+    function exportToExcel() {
+      // Lấy dữ liệu từ localStorage
+      const rawData = JSON.parse(LZString.decompress(localStorage.getItem('vocabularyData'))) || "[]";
+      if (!Array.isArray(rawData) || rawData.length === 0) {
+        alert("Không có dữ liệu để xuất.");
+        return;
+      }
+
+      // Chuẩn hóa dữ liệu
+      const flatData = rawData.map(entry => ({
+        Word: entry.word,
+        Phonetic: entry.phonetic,
+        Level: entry.level,
+        Noun_Definition: entry.noun?.definition || '',
+        Noun_Example: entry.noun?.example || '',
+        Verb_Definition: entry.verb?.definition || '',
+        Adjective_Definition: entry.adjective?.definition || '',
+        Other_Definition: entry.other?.definition || '',
+        Audio_US: entry.audio?.us || '',
+        Audio_UK: entry.audio?.uk || '',
+        Synonyms: entry.synonyms,
+        Antonyms: entry.antonyms,
+        Status: entry.status,
+        Timestamp: entry.timestamp
+      }));
+    //   return ;
+      const workbook = XLSX.utils.book_new();
+
+      // Lấy danh sách cấp độ riêng biệt
+      const levels = [...new Set(flatData.map(item => item.Level))];
+
+      levels.forEach(level => {
+        const levelData = flatData.filter(item => item.Level === level);
+        const sheet = XLSX.utils.json_to_sheet(levelData, { origin: "A2" });
+
+        // Tạo tiêu đề thủ công để có thể định dạng
+        const headers = Object.keys(flatData[0]);
+        XLSX.utils.sheet_add_aoa(sheet, [headers], { origin: "A1" });
+
+        // Tô đậm tiêu đề
+        headers.forEach((_, i) => {
+          const cell = sheet[String.fromCharCode(65 + i) + "1"];
+          if (cell) {
+            cell.s = {
+              font: { bold: true }
+            };
+          }
+        });
+
+        XLSX.utils.book_append_sheet(workbook, sheet, level || "Unknown");
+      });
+
+      // Ghi file
+      XLSX.writeFile(workbook, "TuVung_TheoCapDo.xlsx");
+    }
+  </script>
+</body>
+</html>

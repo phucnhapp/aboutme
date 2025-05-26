@@ -1,3 +1,13 @@
+document.getElementById('fillScore_7').addEventListener('click', async () => {
+    let [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+
+    chrome.scripting.executeScript({
+        target: { tabId: tab.id },
+        files: ['content.js']
+    }, () => {
+        chrome.tabs.sendMessage(tab.id, { action: "go", job: 7 });
+    });
+});
 document.getElementById('fillScore_8').addEventListener('click', async () => {
     let [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
 

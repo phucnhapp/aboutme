@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Chuyển đổi Video/MP3 thành Text</title>
+</head>
+<body>
+    <h1>🎙️ Tải video hoặc MP3 để chuyển thành văn bản</h1>
+    
+    <!-- Form để upload file video hoặc mp3 -->
+    <form id="uploadForm" enctype="multipart/form-data">
+        <input type="file" name="audio" id="audio" accept="audio/*,video/*">
+        <button type="submit">Tải lên</button>
+    </form>
+    
+    <p id="status"></p>
+    <p><strong>Kết quả:</strong> <span id="result"></span></p>
+
+    <!-- Nút để bắt đầu nhận diện giọng nói -->
+    <h2>🎤 Nói trực tiếp để chuyển thành văn bản</h2>
+    <button id="startButton">Bắt đầu ghi âm</button>
+    <p id="voiceResult"></p>
+
+    <script>
+        // Quản lý ghi âm và nhận diện giọng nói
+        const startButton = document.getElementById('startButton');
+        const voiceResult = document.getElementById('voiceResult');
+        
+        // Khởi tạo SpeechRecognition (Dành cho trình duyệt hỗ trợ)
+        const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+        recognition.lang = 'vi-VN';  // Cấu hình nhận diện giọng nói tiếng Việt
+
+        // Khi nhận diện giọng nói thành công
+        recognition.onresult = function(event) {
+            const transcript = event.results[0][0].transcript;
+            voiceResult.innerText = `Bạn nói: ${transcript}`;
+            
+            // Gửi dữ liệu giọng nói lên server để chuyển thành văn bản (có thể dùng Whisper để xử lý thêm)
+            fetch("/transcribeVoice", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({ text: transcript })
+            })
+            .then(response => response.json())
+            .then(data => {
+                voiceResult.innerText = `Chuyển đổi: ${data.text}`;
+            })
+            .catch(error => {
+                voiceResult.innerText = "Có lỗi xảy ra!";
+            });
+        };
+
+        // Khi người dùng nhấn nút để bắt đầu ghi âm
+        startButton.onclick = function() {
+            recognition.start();
+            voiceResult.innerText = "Đang ghi âm... Nói gì đó!";
+        };
+    </script>
+</body>
+</html>

@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Chuyển đổi Video/MP3 thành Text</title>
+</head>
+<body>
+    <h1>🎙️ Tải video hoặc MP3 để chuyển thành văn bản</h1>
+    
+    <!-- Form để upload file video hoặc mp3 -->
+    <form id="uploadForm" enctype="multipart/form-data">
+        <input type="file" name="audio" id="audio" accept="audio/*,video/*">
+        <button type="submit">Tải lên</button>
+    </form>
+    
+    <p id="status"></p>
+    <p><strong>Kết quả:</strong> <span id="result"></span></p>
+
+    <script>
+        document.getElementById("uploadForm").onsubmit = async function (event) {
+            event.preventDefault();  // Ngừng form reload lại trang
+
+            let formData = new FormData();
+            let audioFile = document.getElementById("audio").files[0];
+            formData.append("audio", audioFile);
+
+            document.getElementById("status").innerText = "Đang tải lên...";
+
+            let response = await fetch("/transcribe", {
+                method: "POST",
+                body: formData
+            });
+
+            let data = await response.json();
+            document.getElementById("result").innerText = data.text;
+            document.getElementById("status").innerText = "Phân tích xong!";
+        };
+    </script>
+</body>
+</html>

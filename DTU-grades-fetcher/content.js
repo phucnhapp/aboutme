@@ -13,12 +13,14 @@
                 json.table.rows.forEach(row => {
                     const mssv = row.c[1]?.v?.toString().trim();  // Cột A: MSSV
                     tensv = row.c[2]?.v?.toString().trim()+" "+row.c[3]?.v?.toString().trim();
-                    const diem = parseFloat(row.c[request.job]?.v);                  
-                    if (mssv) data[mssv] = diem.toFixed(2);
-                    let index = findStudentIndex(mssv);
-                    console.log("Điểm sinh viên " + tensv + " là:"+ diem);
-                    setScoreByIndex(index, diem);
+                        const diem = parseFloat(row.c[request.job]?.v);                  
+                        if (mssv) data[mssv] = diem.toFixed(1);
+                        let index = findStudentIndex(mssv);
+                        console.log("Điểm sinh viên " + tensv + " là:"+ diem);
+                        setScoreByIndex(index, diem);
+                    // }
                 });
+                document.getElementById("ctl00_PlaceHolderContentArea_ctl00_ctl01_btnLuu").scrollIntoView({ behavior: "smooth" });
                 showToast("Đã cập nhật: " + count_inserted_diem, "success");
             } catch (error) {
                 console.error("Lỗi tải dữ liệu:", error);
@@ -49,7 +51,7 @@
             if (tds.length > 6) {  // Đảm bảo có ô chứa input
                 let input = tds[6].querySelector("input.txt");
                 if (input) {
-                    input.value = newScore.toFixed(2);  // Làm tròn 2 chữ số thập phân
+                    input.value = newScore.toFixed(1);  // Làm tròn 2 chữ số thập phân
                     input.dispatchEvent(new Event('change'));  // Kích hoạt sự kiện onchange
                     count_inserted_diem++;
                     // console.log(`Đã gán ${newScore.toFixed(2)} cho sinh viên ở index ${index}`);
